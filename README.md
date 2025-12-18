@@ -41,7 +41,7 @@ Stores message metadata.
 - password: TEXT NOT NULL  // Hashed for security
 - password_hint: TEXT  // Optional
 - sender_email: TEXT  // Optional, for notifications
-- asset_url: TEXT NOT NULL  // Cloudinary URL (video or card image)
+- video_url: TEXT NOT NULL  // Cloudinary URL (video or card image)
 - sender_id: UUID REFERENCES users(id) ON DELETE CASCADE
 - created_at: TIMESTAMP DEFAULT NOW()
 
@@ -127,7 +127,7 @@ All endpoints use JSON unless specified. Validate with Zod/Zod-form-data. Handle
     2. Verify password (compare hash).
     3. Insert into opens table.
     4. If senderEmail, send notification email (e.g., via Nodemailer or Supabase edge function).
-    5. Return message content (asset_url, type, theme).
+    5. Return message content (video_url, type, theme).
   - Response: { success: true, type: string, assetUrl: string, theme: string } | 401 invalid password.
 
 - **GET /messages/:slug/download**
@@ -136,7 +136,7 @@ All endpoints use JSON unless specified. Validate with Zod/Zod-form-data. Handle
   - Logic: 
     1. Assume called after open; use provided name.
     2. Insert into downloads table.
-    3. Redirect to Cloudinary asset_url or stream file.
+    3. Redirect to Cloudinary video_url or stream file.
   - Response: File stream | 400 missing name.
 
 - **POST /messages/:slug/reply**

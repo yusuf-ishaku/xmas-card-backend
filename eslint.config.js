@@ -16,7 +16,7 @@ export default defineConfig([
       "no-console": [
         "warn",
         {
-          allow: ["error"],
+          allow: ["error", "info", "warn"],
         },
       ],
       "no-unused-vars": "off",
