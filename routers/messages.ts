@@ -1,5 +1,15 @@
-import { PASSWORD_HASH_SALT, USER_ID } from "@/constants";
-import { addReply, createMessage, getAnalytics, getMessageBySlug } from "@/db";
+import { PASSWORD_HASH_SALT } from "@/constants";
+import { requireAuth } from "@/lib/auth";
+import { 
+      addReply, 
+      createMessage, 
+      getAnalytics, 
+      getMessageBySlug,
+      createMagicLink,
+      logOpen, 
+      markMagicLinkUsed,
+      getValidMagicLinks
+} from "@/db";
 import {
   createMessageSchema,
   openMessageSchema,
@@ -11,9 +21,12 @@ import { compare, hashSync } from "bcryptjs";
 import { Router } from "express";
 import { z } from "zod";
 
+import crypto from "crypto";
+
+
 const router = Router();
 
-router.post("/", multerUpload.single("file"), async (req, res) => {
+router.post("/", requireAuth, multerUpload.single("file"), async (req, res) => {
   try {
     const form = createMessageSchema.parse(req.body);
     const hashedPassword = hashSync(form.password, PASSWORD_HASH_SALT);
@@ -25,8 +38,11 @@ router.post("/", multerUpload.single("file"), async (req, res) => {
       });
     }
 
+    const senderId = (req as any).user?.id;
+    if (!senderId) return res.status(401).json({ success: false, error: "Unauthorized" });
+
     const { error, data } = await (form.type === "text"
-      ? createMessage(USER_ID, {
+      ? createMessage(senderId, {
           ...form,
           password: hashedPassword,
         })
@@ -35,8 +51,8 @@ router.post("/", multerUpload.single("file"), async (req, res) => {
           req.file!.filename,
           req.file!.mimetype,
         )
-          .then((videoUrl) =>
-            createMessage(USER_ID, {
+            .then((videoUrl) =>
+            createMessage(senderId, {
               ...form,
               password: hashedPassword,
               videoUrl,
@@ -103,8 +119,8 @@ router.post("/:slug/open", async (req, res) => {
       });
     }
 
-    // Mock password check
-    const isPasswordValid = await compare(data.password, PASSWORD_HASH_SALT);
+    // Password check against stored hash
+    const isPasswordValid = await compare(data.password, message.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -236,5 +252,94 @@ router.get("/:slug/analytics", async (req, res) => {
     });
   }
 });
+
+
+router.post("/:slug/magic", requireAuth, async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug) {
+  return res.status(400).json({
+    success: false,
+    error: "Slug is required",
+  });
+}
+
+    const senderId = (req as any).user?.id;
+    if (!senderId) return res.status(401).json({ success: false, error: "Unauthorized" });
+
+    const { data: message, error } = await getMessageBySlug(slug);
+    if (!message || error) return res.status(404).json({ success: false, error: "Message not found" });
+
+    if (message.sender_id !== senderId) return res.status(403).json({ success: false, error: "Forbidden" });
+
+    // Generate token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = hashSync(rawToken, PASSWORD_HASH_SALT);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h expiry
+
+    const { data: magicLink, error: insertError } = await createMagicLink(message.id!, tokenHash, expiresAt);
+    if (insertError) throw insertError;
+
+    const url = `${process.env.FRONTEND_URL}/magic/${rawToken}`;
+    return res.status(201).json({ success: true, url });
+  } catch (err) {
+    console.error("Error creating magic link:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+
+
+router.get("/magic/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const { data: links, error } = await getValidMagicLinks();
+    if (error) throw error;
+
+    if (!links || links.length === 0) {
+      return res.status(404).json({ success: false, error: "Invalid or expired magic link" });
+    }
+
+    // Compare tokens using bcrypt
+    let validLink = null;
+    for (const link of links) {
+      const isMatch = await compare(token, link.token_hash);
+      if (isMatch) {
+        validLink = link;
+        break;
+      }
+    }
+
+    if (!validLink) {
+      return res.status(404).json({ success: false, error: "Invalid or expired magic link" });
+    }
+
+    // Mark as used
+    await markMagicLinkUsed(validLink.id);
+
+    // Log open
+    await logOpen({ 
+      message_id: validLink.message_id,
+      opener_first_name: "MagicLink",
+      opener_last_name: "User",
+      timestamp: new Date().toISOString(),
+    });
+
+    // Return message
+    const { data: message, error: messageError } = await getMessageBySlug(validLink.message_id);
+    if (!message || messageError) return res.status(404).json({ success: false, error: "Message not found" });
+
+    return res.json({ success: true, data: message });
+  } catch (err) {
+    console.error("Error consuming magic link:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+
+
+
 
 export default router;

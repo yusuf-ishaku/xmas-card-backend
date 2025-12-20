@@ -1,4 +1,3 @@
-import type { TablesInsert } from "@/database.types";
 import type { TextMessage, VideoMessage } from "@/lib/schemas";
 import { supabase } from "@/lib/services";
 
@@ -40,15 +39,15 @@ export async function createMessage(
   return insert.select("id,slug").single();
 }
 
-export async function logOpen(data: TablesInsert<"opens">) {
+export async function logOpen(data: any) {
   await supabase.from("opens").insert(data);
 }
 
-export async function logDownload(data: TablesInsert<"downloads">) {
+export async function logDownload(data: any) {
   await supabase.from("downloads").insert(data);
 }
 
-export async function addReply(data: TablesInsert<"replies">) {
+export async function addReply(data: any) {
   await supabase.from("replies").insert(data);
 }
 
@@ -58,4 +57,79 @@ export async function getAnalytics(slug: string) {
     .select("id, opens(*), downloads(*), replies(*)")
     .eq("slug", slug)
     .single();
+}
+
+
+export async function createMagicLink(
+  message_id: string,
+  token_hash: string,
+  expires_at: string,
+) {
+  return supabase
+    .from("magic_links")
+    .insert({
+      message_id,
+      token_hash,
+      expires_at,
+    })
+    .select("id, message_id")
+    .single();
+}
+
+
+export async function getValidMagicLinks() {
+  return supabase
+    .from("magic_links")
+    .select("id, token_hash, message_id")
+    .eq("used", false)
+    .gt("expires_at", new Date().toISOString());
+}
+
+
+export async function markMagicLinkUsed(id: string) {
+  return supabase
+    .from("magic_links")
+    .update({ used: true })
+    .eq("id", id);
+}
+
+// --- User helpers (for auth flows)
+export async function getUserByEmail(email: string) {
+  return supabase.from("users").select("*").eq("email", email).single();
+}
+
+export async function createUser(email: string, name?: string) {
+  return supabase
+    .from("users")
+    .insert({ email, name })
+    .select("*")
+    .single();
+}
+
+// --- Auth magic links helpers
+export async function createAuthMagicLink(
+  user_id: string,
+  token_hash: string,
+  expires_at: string,
+) {
+  return supabase
+    .from("auth_magic_links")
+    .insert({ user_id, token_hash, expires_at })
+    .select("id, user_id")
+    .single();
+}
+
+export async function getValidAuthMagicLinks() {
+  return supabase
+    .from("auth_magic_links")
+    .select("id, token_hash, user_id")
+    .eq("used", false)
+    .gt("expires_at", new Date().toISOString());
+}
+
+export async function markAuthMagicLinkUsed(id: string) {
+  return supabase
+    .from("auth_magic_links")
+    .update({ used: true })
+    .eq("id", id);
 }
