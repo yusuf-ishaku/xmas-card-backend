@@ -7,6 +7,7 @@ const baseMessageSchema = z.object({
   passwordHint: z.string().optional(),
   theme: z.string().min(1),
   hint: z.string().optional(),
+  senderId: z.string().min(1),
 });
 
 const textMessageSchema = baseMessageSchema.extend({

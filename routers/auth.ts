@@ -14,31 +14,47 @@ import {
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret";
 
-router.post("/magic", async (req, res) => {
+router.post("/add-user", async (req, res) => {
   try {
+    console.log("Add user request body:", req.body);
     const { email, name } = req.body;
-    if (!email) return res.status(400).json({ success: false, error: "email required" });
+    if (!email)
+      return res.status(400).json({ success: false, error: "email required" });
 
     let { data: user } = await getUserByEmail(email);
     if (!user) {
       const { data: newUser, error } = await createUser(email, name);
-      if (error) return res.status(500).json({ success: false, error: "Unable to create user" });
+      if (error)
+        return res
+          .status(500)
+          .json({ success: false, error: "Unable to create user" });
       user = newUser;
     }
+
+    console.log("User found/created:", user);
 
     const rawToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = hashSync(rawToken, PASSWORD_HASH_SALT);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15m
 
-    const { error: insertErr } = await createAuthMagicLink(user.id, tokenHash, expiresAt);
-    if (insertErr) return res.status(500).json({ success: false, error: "Unable to create magic link" });
+    const { error: insertErr } = await createAuthMagicLink(
+      user.id,
+      tokenHash,
+      expiresAt
+    );
+    if (insertErr)
+      return res
+        .status(500)
+        .json({ success: false, error: "Unable to create magic link" });
 
     const url = `${process.env.FRONTEND_URL ?? ""}/auth/magic/${rawToken}`;
     // In prod send email; in dev return url
-    return res.json({ success: true, url });
+    return res.json({ success: true, url, userId: user.id });
   } catch (err) {
     console.error("Error creating auth magic link:", err);
-    return res.status(500).json({ success: false, error: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
   }
 });
 
@@ -46,7 +62,8 @@ router.get("/magic/:token", async (req, res) => {
   try {
     const { token } = req.params;
     const { data: links, error } = await getValidAuthMagicLinks();
-    if (error) return res.status(500).json({ success: false, error: "DB error" });
+    if (error)
+      return res.status(500).json({ success: false, error: "DB error" });
 
     let matched: any = null;
     for (const l of links ?? []) {
@@ -56,7 +73,10 @@ router.get("/magic/:token", async (req, res) => {
       }
     }
 
-    if (!matched) return res.status(404).json({ success: false, error: "Invalid or expired token" });
+    if (!matched)
+      return res
+        .status(404)
+        .json({ success: false, error: "Invalid or expired token" });
 
     await markAuthMagicLinkUsed(matched.id);
 
@@ -66,7 +86,9 @@ router.get("/magic/:token", async (req, res) => {
     return res.json({ success: true, token: jwtToken });
   } catch (err) {
     console.error("Error consuming auth magic link:", err);
-    return res.status(500).json({ success: false, error: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
   }
 });
 

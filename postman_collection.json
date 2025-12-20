@@ -1,0 +1,437 @@
+{
+  "info": {
+    "name": "Christmas Card Backend API",
+    "description": "API collection for the Christmas Card platform - Create and share personalized Christmas greetings with video/text messages",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "messageSlug",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Send Magic Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"name\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "magic"]
+            },
+            "description": "Send a magic link to the user's email for authentication. The link will be valid for 15 minutes."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Magic Link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.token) {",
+                  "        pm.collectionVariables.set('authToken', jsonData.token);",
+                  "        console.log('Auth token saved:', jsonData.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic/:token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "magic", ":token"],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "your-magic-link-token-here",
+                  "description": "The magic link token from the email"
+                }
+              ]
+            },
+            "description": "Verify the magic link token and receive a JWT for authenticated requests. The JWT is valid for 7 days."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for sender authentication using magic link via email"
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Create Text Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.slug) {",
+                  "        pm.collectionVariables.set('messageSlug', jsonData.slug);",
+                  "        console.log('Message slug saved:', jsonData.slug);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"text\",\n  \"recipientFirstName\": \"Jane\",\n  \"recipientLastName\": \"Smith\",\n  \"text\": \"Merry Christmas! Wishing you joy and happiness this holiday season!\",\n  \"theme\": \"festive\",\n  \"password\": \"xmas2025\",\n  \"passwordHint\": \"Our favorite holiday\",\n  \"hint\": \"Think about winter celebrations\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages"]
+            },
+            "description": "Create a text-based Christmas card message. Requires authentication. Returns a unique slug for sharing."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Video Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.slug) {",
+                  "        pm.collectionVariables.set('messageSlug', jsonData.slug);",
+                  "        console.log('Message slug saved:', jsonData.slug);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "type",
+                  "value": "video",
+                  "type": "text"
+                },
+                {
+                  "key": "recipientFirstName",
+                  "value": "Jane",
+                  "type": "text"
+                },
+                {
+                  "key": "recipientLastName",
+                  "value": "Smith",
+                  "type": "text"
+                },
+                {
+                  "key": "theme",
+                  "value": "snowy",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "xmas2025",
+                  "type": "text"
+                },
+                {
+                  "key": "passwordHint",
+                  "value": "Our favorite holiday",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload video file here"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages"]
+            },
+            "description": "Create a video-based Christmas card message. Requires authentication and video file upload. The video is uploaded to Cloudinary and returns a unique slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Message Exists",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/exists",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "exists"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Check if a message exists by its slug without requiring authentication or password."
+          },
+          "response": []
+        },
+        {
+          "name": "Open Message",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Bob\",\n  \"lastName\": \"Johnson\",\n  \"password\": \"xmas2025\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/open",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "open"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Open and view a message by providing the correct password. Logs the opener's name for analytics. Returns the full message data including video URL or text."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Message Video",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/download?firstName=Bob&lastName=Johnson",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "download"],
+              "query": [
+                {
+                  "key": "firstName",
+                  "value": "Bob",
+                  "description": "Downloader's first name (required)"
+                },
+                {
+                  "key": "lastName",
+                  "value": "Johnson",
+                  "description": "Downloader's last name (required)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Download the message video file. Requires first name and last name for analytics tracking. Only works for video messages."
+          },
+          "response": []
+        },
+        {
+          "name": "Reply to Message",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Bob\",\n  \"lastName\": \"Johnson\",\n  \"replyText\": \"Thank you for the wonderful Christmas wishes! Merry Christmas to you too!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/reply",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "reply"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Add a reply to a message. No authentication required, but recipient must provide their name."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Message Analytics",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/analytics",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "analytics"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Get analytics data for a message including opens, downloads, and replies with timestamps and names."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Message Magic Link",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/:slug/magic",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":slug", "magic"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "{{messageSlug}}",
+                  "description": "The unique message slug (UUID)"
+                }
+              ]
+            },
+            "description": "Create a magic link for a message that allows password-free access. Requires authentication. Only the message sender can create magic links. The link expires after 24 hours."
+          },
+          "response": []
+        },
+        {
+          "name": "Open via Magic Link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/magic/:token",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", "magic", ":token"],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "magic-link-token-here",
+                  "description": "The magic link token"
+                }
+              ]
+            },
+            "description": "Open a message using a magic link token (bypasses password requirement). The link is single-use and expires after 24 hours. Logs the open as 'MagicLink User'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for creating, accessing, and managing Christmas card messages"
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        },
+        "description": "Basic health check endpoint to verify the server is running"
+      },
+      "response": []
+    }
+  ]
+}
