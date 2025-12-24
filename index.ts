@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import messagesRouter from "./routers/messages";
 
 const app = express();
@@ -8,6 +9,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+app.use(cors());
 app.use("/messages", messagesRouter);
 
 app.listen(+port, "0.0.0.0", () => {
