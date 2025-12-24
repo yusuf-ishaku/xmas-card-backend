@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import messagesRouter from "./routers/messages";
 import authRouter from "./routers/auth";
 
@@ -11,6 +12,7 @@ app.get("/", (req, res) => {
 
 app.use(express.json());
 
+app.use(cors());
 app.use("/messages", messagesRouter);
 app.use("/auth", authRouter);
 
