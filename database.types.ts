@@ -159,16 +159,7 @@ export type Database = {
           theme?: string;
           type?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "messages_sender_id_fkey";
-            columns: ["sender_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+        Relationships: [];      };
       opens: {
         Row: {
           id: number;
