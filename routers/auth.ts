@@ -10,13 +10,14 @@ import {
   getValidAuthMagicLinks,
   markAuthMagicLinkUsed,
 } from "@/db";
+import type { Tables } from "@/database.types";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret";
 
 router.post("/add-user", async (req, res) => {
   try {
-    console.log("Add user request body:", req.body);
+    console.info("Add user request body:", req.body);
     const { email, name } = req.body;
     if (!email)
       return res.status(400).json({ success: false, error: "email required" });
@@ -31,7 +32,7 @@ router.post("/add-user", async (req, res) => {
       user = newUser;
     }
 
-    console.log("User found/created:", user);
+    console.info("User found/created:", user);
 
     const rawToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = hashSync(rawToken, PASSWORD_HASH_SALT);
@@ -65,7 +66,10 @@ router.get("/magic/:token", async (req, res) => {
     if (error)
       return res.status(500).json({ success: false, error: "DB error" });
 
-    let matched: any = null;
+    let matched: Pick<
+      Tables<"auth_magic_links">,
+      "id" | "token_hash" | "user_id"
+    > | null = null;
     for (const l of links ?? []) {
       if (await compare(token, l.token_hash)) {
         matched = l;

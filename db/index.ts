@@ -1,3 +1,4 @@
+import type { TablesInsert } from "@/database.types";
 import type { TextMessage, VideoMessage } from "@/lib/schemas";
 import { supabase } from "@/lib/services";
 
@@ -39,15 +40,15 @@ export async function createMessage(
   return insert.select("id,slug").single();
 }
 
-export async function logOpen(data: any) {
+export async function logOpen(data: TablesInsert<"opens">) {
   await supabase.from("opens").insert(data);
 }
 
-export async function logDownload(data: any) {
+export async function logDownload(data: TablesInsert<"downloads">) {
   await supabase.from("downloads").insert(data);
 }
 
-export async function addReply(data: any) {
+export async function addReply(data: TablesInsert<"replies">) {
   await supabase.from("replies").insert(data);
 }
 

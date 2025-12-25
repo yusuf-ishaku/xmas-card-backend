@@ -282,7 +282,7 @@ router.post("/:slug/magic", requireAuth, async (req, res) => {
       });
     }
 
-    const senderId = (req as any).user?.id;
+    const senderId = (req as unknown as Request & { user?: { id: string } }).user?.id;
     if (!senderId)
       return res.status(401).json({ success: false, error: "Unauthorized" });
 
@@ -300,7 +300,7 @@ router.post("/:slug/magic", requireAuth, async (req, res) => {
     const tokenHash = hashSync(rawToken, PASSWORD_HASH_SALT);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h expiry
 
-    const { data: magicLink, error: insertError } = await createMagicLink(
+    const { error: insertError } = await createMagicLink(
       message.id!,
       tokenHash,
       expiresAt,
