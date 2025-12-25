@@ -28,7 +28,6 @@ const router = Router();
 router.post("/", multerUpload.single("file"), async (req, res) => {
   try {
     const form = createMessageSchema.parse(req.body);
-    const hashedPassword = hashSync(form.password, PASSWORD_HASH_SALT);
 
     if (form.type === "video" && !req.file) {
       return res.status(400).json({
@@ -44,17 +43,16 @@ router.post("/", multerUpload.single("file"), async (req, res) => {
     const { error, data } = await (form.type === "text"
       ? createMessage(senderId, {
           ...form,
-          password: hashedPassword,
         })
       : uploadToCloudinary(
           req.file!.buffer,
-          req.file!.filename,
+          // req.file.filename is undefined with memory storage
+          `${Date.now()}_${req.file!.originalname.replace(/\s+/g, "_")}`,
           req.file!.mimetype,
         )
           .then((videoUrl) =>
             createMessage(senderId, {
               ...form,
-              password: hashedPassword,
               videoUrl,
             }),
           )
@@ -117,7 +115,6 @@ router.get("/:slug/exists", async (req, res) => {
   return res.status(200).json({
     success: true,
     exists: true,
-    password_hint: data.password_hint,
   });
 });
 
@@ -134,16 +131,6 @@ router.post("/:slug/open", async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Message not found",
-      });
-    }
-
-    // Password check against stored hash
-    const isPasswordValid = await compare(data.password, message.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid password",
       });
     }
 

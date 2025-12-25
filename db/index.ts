@@ -18,22 +18,18 @@ export async function createMessage(
   const insert =
     data.type === "text"
       ? table.insert({
-          password: data.password,
           recipient_first_name: data.recipientFirstName,
           recipient_last_name: data.recipientLastName,
           sender_id,
-          password_hint: data.passwordHint,
           theme: data.theme,
           type: data.type,
           text: data.text,
         })
       : table.insert({
-          password: data.password,
           recipient_first_name: data.recipientFirstName,
           recipient_last_name: data.recipientLastName,
           sender_id,
           type: data.type,
-          password_hint: data.passwordHint,
           theme: data.theme,
           video_url: data.videoUrl,
         });

@@ -121,8 +121,8 @@ export type Database = {
           video_url: string | null;
           created_at: string | null;
           id: string;
-          password: string;
-          password_hint: string | null;
+          password?: string | null;
+          password_hint?: string | null;
           recipient_first_name: string;
           recipient_last_name: string;
           sender_id: string;
@@ -135,7 +135,7 @@ export type Database = {
           video_url?: string | null;
           created_at?: string | null;
           id?: string;
-          password: string;
+          password?: string | null;
           password_hint?: string | null;
           recipient_first_name: string;
           recipient_last_name: string;
@@ -149,7 +149,7 @@ export type Database = {
           video_url?: string | null;
           created_at?: string | null;
           id?: string;
-          password?: string;
+          password?: string | null;
           password_hint?: string | null;
           recipient_first_name?: string;
           recipient_last_name?: string;
