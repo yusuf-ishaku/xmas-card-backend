@@ -5,6 +5,9 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig([
   {
+    ignores: ["dist/"],
+  },
+  {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
     plugins: { js },
     extends: ["js/recommended"],
@@ -20,7 +23,14 @@ export default defineConfig([
         },
       ],
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ]);
