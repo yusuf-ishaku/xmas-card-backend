@@ -24,6 +24,7 @@ export async function createMessage(
           theme: data.theme,
           type: data.type,
           text: data.text,
+          slug: Math.random().toString(36).substring(2, 8),
         })
       : table.insert({
           recipient_first_name: data.recipientFirstName,
@@ -32,6 +33,7 @@ export async function createMessage(
           type: data.type,
           theme: data.theme,
           video_url: data.videoUrl,
+          slug: Math.random().toString(36).substring(2, 8),
         });
   return insert.select("id,slug").single();
 }
