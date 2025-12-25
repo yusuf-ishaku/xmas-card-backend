@@ -11,8 +11,14 @@ app.get("/", (req, res) => {
 });
 
 app.use(express.json());
-
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://holigram.vercel.app",
+    "https://withlove.applift.xyz",
+    "https://holigram.applift.xyz"
+  ]
+}));
 app.use("/messages", messagesRouter);
 app.use("/auth", authRouter);
 
